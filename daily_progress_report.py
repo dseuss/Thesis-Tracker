@@ -92,12 +92,12 @@ def parse_wdiff_output(output):
 
     return counts
 
-def get_wordcount_diff(repo, basecommit, currentcommit):
+def get_wordcount_diff(repo, basecommit, currentcommit, files):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     command = [f'GIT_EXTERNAL_DIFF={script_dir}/wclatex-git',
                'git', '--no-pager', f'--git-dir="{repo.git_dir}"',
                f'--work-tree="{repo.working_tree_dir}"',
-               'diff', str(basecommit), str(currentcommit), ' --', '"*.tex"']
+               'diff', str(basecommit), str(currentcommit), ' --', files]
     command_str = ' '.join(command)
     logging.info(f'Calling command: {command_str}')
 
@@ -123,8 +123,9 @@ def print_message(word_diff, words):
 @click.option('--words', default=None, help='Goal set for the number of daily written words')
 @click.option('--directory', default='.', help='Base directory of the git repo')
 @click.option('--basecommit', default=None, help='Commit to compare current status to')
+@click.option('--files', default='"*.tex"', help='Which files to include')
 @log_functioncall
-def report(words, directory, basecommit):
+def report(words, directory, basecommit, files):
     """Looks at all tex documents in `directory` and compares the number of
     words written in them now to the last commit of yesterday.
     """
@@ -141,7 +142,7 @@ def report(words, directory, basecommit):
         basecommit = get_basecommit(repo) if basecommit is None \
             else repo.commit(basecommit)
         currentcommit = repo.commit('HEAD')
-        word_diff = get_wordcount_diff(repo, basecommit, currentcommit)
+        word_diff = get_wordcount_diff(repo, basecommit, currentcommit, files)
         print_message(word_diff, words)
     except ValueError as e:
         print(e)
